@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1b1e1c" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="WA Later">
+  <meta name="description" content="Write a WhatsApp message now. Create a Things reminder to send it later.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" href="./icons/icon-192.png" type="image/png">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+  <title>WhatsApp Later</title>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">A little reminder to stay in touch</p>
+      <h1>WhatsApp Later</h1>
+      <p class="subtitle">Write now. Send later.</p>
+    </header>
+    <form id="composer">
+      <div class="field">
+        <label for="recipient">To</label>
+        <input id="recipient" name="recipient" type="text" placeholder="Person or group" required autocomplete="off" enterkeyhint="next" aria-describedby="recipient-hint">
+        <p class="hint" id="recipient-hint">A name for your reminder. Choose the chat in WhatsApp.</p>
+      </div>
+      <fieldset class="field">
+        <legend>When</legend>
+        <div class="schedule">
+          <input id="date" name="date" type="date" required aria-label="Reminder date">
+          <input id="time" name="time" type="time" required step="60" aria-label="Reminder time">
+        </div>
+        <p class="hint">In your local time.</p>
+      </fieldset>
+      <div class="field message-field">
+        <label for="message">Message</label>
+        <textarea id="message" name="message" rows="6" placeholder="Write your message..." required></textarea>
+      </div>
+      <p id="validation" class="validation" aria-live="polite"></p>
+      <button id="create" type="submit" disabled>Create in Things <span aria-hidden="true">→</span></button>
+      <div class="fallback">
+        <p>Things 3 must be installed.</p>
+        <button id="copy" type="button" disabled>Copy link</button>
+      </div>
+      <p id="status" class="hint status" role="status"></p>
+      <div id="manual-copy" hidden>
+        <label for="link">Select and copy this Things link</label>
+        <textarea id="link" rows="3" readonly></textarea>
+      </div>
+    </form>
+    <footer>Things reminds you. You choose the chat and send.</footer>
+    <noscript><p>Please enable JavaScript to compose a reminder.</p></noscript>
+  </main>
+</body>
+</html>
