@@ -78,7 +78,7 @@ console.log('Passed: encoding, validation, local time in four zones, DST, manife
     },
     caches: {
       open: async () => cache,
-      keys: async () => ['whatsapp-later-v0', 'whatsapp-later-v1', 'unrelated'],
+      keys: async () => ['whatsapp-later-v1', 'whatsapp-later-v2', 'unrelated'],
       delete: async key => { deleted.push(key); }
     },
     fetch: async () => { fetched = true; throw new Error('Offline'); }
@@ -89,7 +89,7 @@ console.log('Passed: encoding, validation, local time in four zones, DST, manife
   for (const asset of shell) assert.ok(fs.existsSync(asset), asset);
   handlers.activate({waitUntil: promise => { pending = promise; }});
   await pending;
-  assert.deepEqual(deleted, ['whatsapp-later-v0']);
+  assert.deepEqual(deleted, ['whatsapp-later-v1']);
   assert.ok(claimed);
   for (const asset of shell) {
     const url = new URL(asset, scope).href;
@@ -101,4 +101,47 @@ console.log('Passed: encoding, validation, local time in four zones, DST, manife
     handlers.fetch({request: {url, method: 'GET'}, respondWith: () => assert.fail('Worker intercepted an unrelated request')});
   }
   console.log('Passed: worker install, cache cleanup, offline shell, repository scope, and external-link bypass.');
+})().catch(error => { console.error(error); process.exitCode = 1; });
+
+// Verify the handoff uses the draft even though the form is cleared first.
+(async () => {
+  const elements = Object.fromEntries(['composer', 'recipient', 'date', 'time', 'message', 'create', 'copy', 'status', 'validation', 'manual-copy', 'link'].map(id => [id, {
+    value: '', handlers: {}, addEventListener(name, handler) { this.handlers[name] = handler; }
+  }]));
+  elements.composer.reset = () => {
+    for (const name of ['recipient', 'date', 'time', 'message']) elements[name].value = '';
+  };
+  elements.composer.reportValidity = () => true;
+  const draft = {recipient: 'Family & friends', ...localFields(new Date(Date.now() + 86400000)), message: 'Hello 👋\nSee you soon!'};
+  let stored = JSON.stringify(draft);
+  let copied;
+  const window = {location: {}, addEventListener() {}};
+  const context = {
+    document: {querySelector: selector => elements[selector.slice(1)], getElementById: id => elements[id], addEventListener() {}},
+    window,
+    localStorage: {getItem: () => stored, setItem: (key, value) => { stored = value; }, removeItem: () => { stored = null; }},
+    navigator: {clipboard: {writeText: async value => { copied = value; }}},
+    setInterval() {}
+  };
+  vm.runInNewContext(fs.readFileSync('app.js', 'utf8'), context);
+  elements.composer.handlers.submit({preventDefault() {}});
+  const expected = buildThingsUrl(draft.recipient, draft.date, draft.time, draft.message);
+  assert.equal(window.location.href, expected);
+  assert.equal(elements.recipient.value, '');
+  assert.equal(elements.message.value, '');
+  assert.equal(stored, null);
+  assert.ok(new Date(`${elements.date.value}T${elements.time.value}`) > new Date());
+  assert.equal(elements.create.disabled, true);
+  assert.equal(elements.copy.disabled, false);
+  await elements.copy.handlers.click();
+  assert.equal(copied, expected);
+  elements.recipient.value = 'New draft';
+  elements.composer.handlers.input();
+  assert.equal(elements.copy.disabled, true);
+  assert.equal(JSON.parse(stored).recipient, 'New draft');
+  window.location.href = '';
+  elements.composer.handlers.submit({preventDefault() {}});
+  assert.equal(elements.recipient.value, 'New draft');
+  assert.equal(window.location.href, '');
+  console.log('Passed: submit clears form/storage, preserves handoff and copy fallback, and keeps invalid drafts.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -40,9 +40,16 @@ if (typeof document !== 'undefined') {
   const validation = document.querySelector('#validation');
   const storageKey = 'whatsapp-later-draft';
   const readDraft = () => Object.fromEntries(Object.entries(inputs).map(([name, input]) => [name, input.value]));
-  const defaultTime = localFields(new Date(Math.ceil((Date.now() + 60 * 60 * 1000) / 60000) * 60000));
-  inputs.date.value = defaultTime.date;
-  inputs.time.value = defaultTime.time;
+  let lastThingsUrl = '';
+  function resetComposer() {
+    form.reset();
+    const defaultTime = localFields(new Date(Math.ceil((Date.now() + 60 * 60 * 1000) / 60000) * 60000));
+    inputs.date.value = defaultTime.date;
+    inputs.time.value = defaultTime.time;
+    document.querySelector('#manual-copy').hidden = true;
+    document.querySelector('#link').value = '';
+  }
+  resetComposer();
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey));
     if (saved && typeof saved === 'object') {
@@ -58,12 +65,14 @@ if (typeof document !== 'undefined') {
     inputs.date.min = localFields(new Date()).date;
     const earliest = localFields(new Date(Math.ceil((Date.now() + 1) / 60000) * 60000));
     inputs.time.min = draft.date === earliest.date ? earliest.time : '';
-    create.disabled = copy.disabled = Boolean(error);
+    create.disabled = Boolean(error);
+    copy.disabled = Boolean(error) && !lastThingsUrl;
     validation.textContent = error && draft.recipient.trim() && draft.message.trim() ? error : '';
     return !error;
   }
 
   form.addEventListener('input', () => {
+    lastThingsUrl = '';
     status.textContent = '';
     document.querySelector('#manual-copy').hidden = true;
     refresh();
@@ -73,13 +82,17 @@ if (typeof document !== 'undefined') {
     event.preventDefault();
     if (!refresh() || !form.reportValidity()) return;
     const { recipient, date, time, message } = readDraft();
+    lastThingsUrl = buildThingsUrl(recipient, date, time, message);
+    resetComposer();
+    try { localStorage.removeItem(storageKey); } catch { /* Keep working without persistence. */ }
+    refresh();
     status.textContent = 'Opening Things… If it doesn’t open, use Copy link.';
-    window.location.href = buildThingsUrl(recipient, date, time, message);
+    window.location.href = lastThingsUrl;
   });
   copy.addEventListener('click', async () => {
-    if (!refresh()) return;
+    if (!refresh() && !lastThingsUrl) return;
     const { recipient, date, time, message } = readDraft();
-    const url = buildThingsUrl(recipient, date, time, message);
+    const url = lastThingsUrl || buildThingsUrl(recipient, date, time, message);
     try {
       await navigator.clipboard.writeText(url);
       status.textContent = 'Things link copied.';

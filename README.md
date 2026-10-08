@@ -22,7 +22,7 @@ The local time is passed directly as `YYYY-MM-DD@HH:mm`, never converted to UTC.
 
 If Things does not open, use **Copy link**. If clipboard access is unavailable, the link appears in a selectable field for manual copying. Opening an app URL cannot confirm task creation; check the new task in Things. Avoid repeated taps that could create duplicates.
 
-The draft stays in this browser's localStorage, including after switching apps. Storage failures do not prevent composing. Safari and the Home Screen app may have separate storage. A saved time that has passed remains visible and must be changed. Long messages are preserved, but creation is disabled when the encoded WhatsApp URL exceeds Things' 10,000-character notes limit; recipient titles are limited to 4,000 characters. Times skipped by daylight saving changes are rejected; ambiguous fall-back times follow the device's local interpretation.
+The draft stays in this browser's localStorage until you tap Create in Things. That tap clears the recipient, message, and saved draft, and resets the reminder to about an hour from now, before attempting to open Things. Copy link still copies the submitted link during this session until you edit the form or reload. Storage failures do not prevent composing. Safari and the Home Screen app may have separate storage. A saved time that has passed remains visible and must be changed. Long messages are preserved, but creation is disabled when the encoded WhatsApp URL exceeds Things' 10,000-character notes limit; recipient titles are limited to 4,000 characters. Times skipped by daylight saving changes are rejected; ambiguous fall-back times follow the device's local interpretation.
 
 ## Verification
 
@@ -34,7 +34,7 @@ Real iPhone checks (not verified by automated tests):
 - Open the notes link with WhatsApp installed. Confirm recipient selection supports both people and groups, preserves the message including emojis and newlines, and requires a manual Send. Recipient-free link behavior can vary with platform and WhatsApp version.
 - Try Things missing or URL handling disabled; check Copy link and manual copy fallback. No successful-creation message should appear.
 - Check narrow iPhones, keyboard scrolling, native pickers, safe areas, light/dark mode, and larger text.
-- Save a draft, switch to Things, return, close/reopen, and verify it remains. Advance past the selected time and confirm creation is disabled.
+- Save a draft and close/reopen to verify persistence. Tap Create in Things and return: confirm the form and saved draft are cleared and the date/time reset. Confirm Copy link still copies the submitted link if Things did not open. Advance past a selected time and confirm creation is disabled.
 - After the first online visit, reopen in airplane mode and construct/copy a link. WhatsApp sending is not an offline feature.
 - For an app update, bump `CACHE` in `sw.js` whenever shell files change. Reopen online, then close all app/Safari tabs within its scope and reopen so the waiting worker activates. Updates replace the entire cached shell together.
 
